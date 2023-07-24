@@ -1,4 +1,14 @@
 let kittens = []
+
+class Kitty {
+  constructor(id, name, mood, affection) {
+    this.id = id; 
+    this.name = name;
+    this.mood = mood;
+    this.affection = affection;
+  }
+}
+
 /**
  * Called when submitting the new Kitten Form
  * This method will pull data from the form
@@ -7,6 +17,30 @@ let kittens = []
  * Then reset the form
  */
 function addKitten(event) {
+  event.preventDefault()
+
+  //Clear Kitties
+  //clearKittens()
+
+  //Verify Form is correct
+
+  //Create an ID for the kitten
+  let tempId = generateId()
+
+  //Grab kitten name
+  let kittenName = document.getElementById("kittenName").value
+
+  //Clear form
+  var frm = document.getElementById('formId');
+  frm.reset();  
+
+  let newKitten = new Kitty(tempId, kittenName, "Tolerant", 5)
+
+  //Add kitten to array
+  kittens.push(newKitten)
+  console.log(kittens)
+
+  saveKittens()
 }
 
 /**
@@ -14,6 +48,7 @@ function addKitten(event) {
  * Saves the string to localstorage at the key kittens 
  */
 function saveKittens() {
+    localStorage.setItem("kittens", JSON.stringify(kittens))
 }
 
 /**
@@ -22,6 +57,11 @@ function saveKittens() {
  * the kittens array to the retrieved array
  */
 function loadKittens() {
+    let storageKittens = localStorage.getItem("kittens")
+    if (storageKittens != null) {
+      //May need to implement this with proper words or 1 by 1
+      kittens = JSON.parse(storageKittens)
+    }
 }
 
 /**
@@ -34,9 +74,12 @@ function drawKittens() {
 /**
  * Find the kitten in the array by its id
  * @param {string} id 
+ * 
  * @return {Kitten}
  */
 function findKittenById(id) {
+  let kitten = kittens.find(o => o.id === id)
+  return kitten
 }
 
 
@@ -49,6 +92,14 @@ function findKittenById(id) {
  * @param {string} id 
  */
 function pet(id) {
+  let needyKitty = findKittenById(id)
+  if (Math.random() > .5) {
+    needyKitty.affection += 1
+  } else {
+    needyKitty.affection -= 1
+  }
+
+  //Save after
 }
 
 /**
@@ -58,6 +109,11 @@ function pet(id) {
  * @param {string} id
  */
 function catnip(id) {
+  let kitty = findKittenById(id)
+  kitty.mood = "tolerant"
+  kitty.affection = 5;
+
+  //Save after
 }
 
 /**
@@ -65,6 +121,13 @@ function catnip(id) {
  * @param {Kitten} kitten 
  */
 function setKittenMood(kitten) {
+  if (kitten.affection > 5) {
+    kitten.mood = "Happy"
+  } else if (kitten.affection > 3) {
+    kitten.mood = "Alright"
+  } else {
+    kitten.mood = "Sad"
+  }
 }
 
 /**
@@ -72,6 +135,8 @@ function setKittenMood(kitten) {
  * remember to save this change
  */
 function clearKittens(){
+  kittens = []
+  saveKittens()
 }
 
 /**
@@ -88,7 +153,7 @@ function getStarted() {
 
 /**
  * Defines the Properties of a Kitten
- * @typedef {{id:sting, name: string, mood: string, affection: number}} Kitten
+ * @typedef {{id:string, name: string, mood: string, affection: number}} Kitten
  */
 
 
