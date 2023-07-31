@@ -1,13 +1,20 @@
 let kittens = []
 
 class Kitty {
-  constructor(id, name, mood, affection) {
-    this.id = id; 
-    this.name = name;
-    this.mood = mood;
-    this.affection = affection;
+  // create values instead of passing them here
+  id;
+  name;
+  affection;
+  mood;
+
+  constructor(name) {
+    this.id = generateId()
+    this.name = name
+    this.affection = 5
+    this.mood = "Tolerant"
   }
 }
+
 
 /**
  * Called when submitting the new Kitten Form
@@ -24,23 +31,34 @@ function addKitten(event) {
 
   //Verify Form is correct
 
-  //Create an ID for the kitten
-  let tempId = generateId()
-
   //Grab kitten name
-  let kittenName = document.getElementById("kittenName").value
+  // @ts-ignore
+  let kittenName = titleCaseName(document.getElementById("kittenName").value)
 
-  //Clear form
-  var frm = document.getElementById('formId');
-  frm.reset();  
+  if (kittenName.length > 0 && kittens.find(o => o.name === kittenName) === undefined)
+  {
+    //Clear form
+    var frm = document.getElementById('formId');
+    // @ts-ignore
+    frm.reset();  
 
-  let newKitten = new Kitty(tempId, kittenName, "Tolerant", 5)
+    let newKitten = new Kitty(kittenName)
 
-  //Add kitten to array
-  kittens.push(newKitten)
-  console.log(kittens)
+    //Add kitten to array
+    kittens.push(newKitten)
+    console.log(kittens)
+    
 
-  saveKittens()
+    saveKittens()
+    drawKitten(newKitten)
+
+  } else if (kittenName.length === 0) {
+    alert("Please give your kitty a name")
+
+  //Notify duplicate cat attempt
+  } else if (kittens.find(o => o.name === kittenName) !== undefined) {
+    alert(kittenName + " already exists!")
+  }
 }
 
 /**
@@ -60,14 +78,78 @@ function loadKittens() {
     let storageKittens = localStorage.getItem("kittens")
     if (storageKittens != null) {
       //May need to implement this with proper words or 1 by 1
+      console.log("GRABBED KITTENS")
       kittens = JSON.parse(storageKittens)
+    } else {
+      console.log("DIDNT GRAB KITTENS")
     }
 }
 
 /**
  * Draw all of the kittens to the kittens element
  */
+
 function drawKittens() {
+  // Clear all cards before redrawing
+  const elements = document.getElementsByClassName("card");
+  while(elements.length > 0){
+      elements[0].remove();
+  }
+
+  kittens.forEach((kitty) => {
+    drawKitten(kitty)
+    setKittenMood(kitty)
+  });
+}
+
+function drawKitten(kitty) {
+  let kittenshtml = document.getElementById("kittens");
+
+  let card = document.createElement("div");
+  card.className = "card"
+  card.id = kitty.id
+
+  //Add image
+  let img = document.createElement("img")
+  img.className = "card-img"
+  img.src = "kitten-tolerant.png"
+  img.height = 100
+  img.alt = "Moody Kittens"
+  card.appendChild(img)
+
+  //Add Name to Card
+  let name = document.createElement("h2")
+  name.className = "card-name"
+  name.innerText = kitty.name
+  card.appendChild(name)
+
+  //Add Mood to Card
+  let mood = document.createElement("h2")
+  mood.className = "card-mood"
+  mood.innerText = kitty.mood
+  card.appendChild(mood)
+
+  //Add Buttons
+  let petButton = document.createElement("button");
+  petButton.innerText = "Pet"
+  petButton.value = kitty.id
+  petButton.addEventListener('click', function() {pet(this.value)})
+  card.appendChild(petButton)
+
+  let catnipButton = document.createElement("button");
+  catnipButton.innerText = "Cat Nip"
+  catnipButton.value = kitty.id
+  catnipButton.addEventListener('click', function() {catnip(this.value)})
+  card.appendChild(catnipButton)
+
+  let deleteButton = document.createElement("button");
+  deleteButton.innerText = "Delete"
+  deleteButton.value = kitty.id
+  deleteButton.addEventListener('click', function() {deleteKitten(this.value)})
+  card.appendChild(deleteButton)
+
+  // @ts-ignore
+  kittenshtml.appendChild(card)
 }
 
 
@@ -82,6 +164,17 @@ function findKittenById(id) {
   return kitten
 }
 
+function deleteKitten(id) {
+  //Remove kitten from array
+  let kitten = findKittenById(id)
+  kittens.splice(kittens.indexOf(kitten), 1)
+
+  //Remove Card
+  let card = document.getElementById(kitten.id);
+  card?.remove()
+
+  saveKittens()
+}
 
 /**
  * Find the kitten in the array of kittens
@@ -92,14 +185,18 @@ function findKittenById(id) {
  * @param {string} id 
  */
 function pet(id) {
-  let needyKitty = findKittenById(id)
-  if (Math.random() > .5) {
-    needyKitty.affection += 1
-  } else {
-    needyKitty.affection -= 1
-  }
+  //loadKittens()
+  let kitten = findKittenById(id)
 
-  //Save after
+  //Change kitty affection by one, but keep in a range from 1 to 10
+  if (kitten.affection !== 10 && (kitten.affection === 1 || Math.random() > .5)) {
+    kitten.affection += 1
+  } else {
+    kitten.affection -= 1
+  }
+  setKittenMood(kitten)
+
+  saveKittens()
 }
 
 /**
@@ -110,25 +207,64 @@ function pet(id) {
  */
 function catnip(id) {
   let kitty = findKittenById(id)
-  kitty.mood = "tolerant"
   kitty.affection = 5;
-
+  setKittenMood(kitty)
   //Save after
+  saveKittens()
 }
 
 /**
- * Sets the kittens mood based on its affection
+ * Sets the kittens mood based on its affection and changes Card Styles to match Mood
  * @param {Kitten} kitten 
  */
 function setKittenMood(kitten) {
-  if (kitten.affection > 5) {
-    kitten.mood = "Happy"
-  } else if (kitten.affection > 3) {
-    kitten.mood = "Alright"
+
+  //Grab Card
+  let card = document.getElementById(kitten.id);
+
+  //Update css
+  if (card !== null) {
+    if (kitten.affection > 6) {
+      kitten.mood = "Happy"
+      card.style.backgroundColor = "gold"
+      card.style.color = "white"
+    } else if (kitten.affection > 3) {
+      kitten.mood = "Tolerant"
+      card.style.backgroundColor = "azure"
+      card.style.color = "black"
+    } else {
+      kitten.mood = "Angry"
+      card.style.backgroundColor = "lightblue"
+      card.style.color = "black"
+    }
+    // Add visual effedt to kitten png
+    card.className = "card kitten " + kitten.mood.toLowerCase();
+    //Update card html
+    const collection = card.children;
+    for (let i = 0; i < collection.length; i++) {
+      //Update mood text
+      if (collection[i].className === "card-mood") {
+        collection[i].innerHTML = kitten.mood
+      }
+      //Update kitten image
+      else if (collection[i].className === "card-img") {
+        let newImage = "kitten-" + kitten.mood.toLowerCase() + ".png"
+        collection[i].src = newImage;
+        console.log(collection[i])
+      }
+    }
   } else {
-    kitten.mood = "Sad"
+    console.log("Card is null.")
   }
+
+  debugKitty("setKittenMood", kitten)
 }
+
+function debugKitty(fun, kitten){
+  console.log(fun + " > " + kitten.name + "(" + kitten.id + ")" + ": " + kitten.mood + ", " + kitten.affection)
+}
+
+// function drawKittyMood(id, mood)
 
 /**
  * Removes all of the kittens from the array
@@ -137,6 +273,19 @@ function setKittenMood(kitten) {
 function clearKittens(){
   kittens = []
   saveKittens()
+  loadKittens()
+  drawKittens()
+ // location.reload() // DELETE
+}
+
+//https://stackoverflow.com/questions/196972/convert-string-to-title-case-with-javascript
+function titleCaseName(str){
+  return str.replace(
+    /\w\S*/g,
+    function(txt) {
+      return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    }
+  );
 }
 
 /**
@@ -144,8 +293,10 @@ function clearKittens(){
  * list of kittens to the page. Good Luck
  */
 function getStarted() {
+  // @ts-ignore
   document.getElementById("welcome").remove();
-  console.log('Good Luck, Take it away')
+  loadKittens()
+  drawKittens()
 }
 
 
@@ -165,5 +316,3 @@ function getStarted() {
 function generateId() {
   return Math.floor(Math.random() * 10000000) + "-" + Math.floor(Math.random() * 10000000)
 }
-
-loadKittens();

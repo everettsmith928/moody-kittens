@@ -80,6 +80,8 @@ button{
   transition: all .2s ease;
   cursor: pointer;
   padding: .5em;
+  margin: .25em;
+
 }
 button:focus{
   outline: none;
@@ -117,10 +119,15 @@ button.btn-special:hover{
 }
 
 .card{
-  background-color: var(--light);
+  background-color: azure;
   padding: 1em;
+  margin: .25em;
   box-shadow: var(--shadow);
   border-radius: var(--corners);
+  font-family: 'Oswald', sans-serif;
+  transition-duration: .5s;
+  text-align: center;
+  color: darkgrey;
 }
 
 .shadow{
