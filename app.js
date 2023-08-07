@@ -248,7 +248,7 @@ function setKittenMood(kitten) {
       }
       //Update kitten image
       else if (collection[i].className === "card-img") {
-        let newImage = "kitten-" + kitten.mood.toLowerCase() + ".png"
+        let newImage = "kitten-tolerant.png"
         collection[i].src = newImage;
         console.log(collection[i])
       }
